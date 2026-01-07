@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Firebase Chat</title>
-
 <style>
 body{
   font-family: Arial;
@@ -55,7 +54,7 @@ input, button{
 <body>
 
 <div id="auth">
-  <h2>تسجيل / دخول</h2>
+  <h2>تسجيل / إنشاء حساب</h2>
   <input id="email" placeholder="Email">
   <input id="password" type="password" placeholder="Password">
   <button onclick="signup()">إنشاء حساب</button>
@@ -81,7 +80,6 @@ input, button{
 </div>
 
 <script type="module">
-/* Firebase */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { 
   getAuth,
@@ -97,6 +95,7 @@ import {
   collection, query, where, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+/* ==== Firebase Config ==== */
 const firebaseConfig = {
   apiKey: "AIzaSyBXMvQWlb5xmX0DGMxC3xtOExib4_EacEk",
   authDomain: "quick-chat-53fbb.firebaseapp.com",
@@ -105,51 +104,63 @@ const firebaseConfig = {
   messagingSenderId: "625877774608",
   appId: "1:625877774608:web:476fb494ae237319a63595"
 };
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-// ⚡ تعريف عناصر HTML
-const authDiv = document.getElementById("auth");           // div تسجيل الدخول / إنشاء حساب
-const appDiv = document.getElementById("app");             // div الشات الرئيسي
-const chatList = document.getElementById("chatList");      // قائمة الدردشات
-const chatTitle = document.getElementById("chatTitle");    // اسم المستخدم اللي بتتكلم معاه
-const chatMessages = document.getElementById("chatMessages"); // الرسائل
 
+/* ==== تعريف عناصر HTML ==== */
+const authDiv = document.getElementById("auth");
+const appDiv = document.getElementById("app");
+const chatList = document.getElementById("chatList");
+const chatTitle = document.getElementById("chatTitle");
+const chatMessages = document.getElementById("chatMessages");
+
+/* ==== المستخدم الحالي والدردشة الحالية ==== */
 let currentUser;
 let currentChatId;
 
-/* Auth */
+/* ==== تسجيل حساب جديد ==== */
 window.signup = function(){
-  createUserWithEmailAndPassword(auth, email.value, password.value);
+  createUserWithEmailAndPassword(auth, email.value, password.value)
+  .then(()=>{ email.value=""; password.value=""; })
+  .catch(err=>alert(err.message));
 }
 
+/* ==== تسجيل دخول ==== */
 window.login = function(){
-  signInWithEmailAndPassword(auth, email.value, password.value);
+  signInWithEmailAndPassword(auth, email.value, password.value)
+  .then(()=>{ email.value=""; password.value=""; })
+  .catch(err=>alert(err.message));
 }
 
+/* ==== تسجيل خروج ==== */
 window.logout = function(){
   signOut(auth);
 }
 
+/* ==== مراقبة حالة تسجيل الدخول ==== */
 onAuthStateChanged(auth, user=>{
   if(user){
     currentUser = user;
-    auth.style.display="none";
-    appDiv.style.display="flex";
+    authDiv.style.display = "none";
+    appDiv.style.display = "flex";
+    saveUser(user.email);
     loadChats();
   }else{
-    auth.style.display="block";
-    authDiv.style.display = "none";
+    authDiv.style.display = "block";
+    appDiv.style.display = "none";
   }
 });
 
-const appDiv = document.getElementById("app");
+/* ==== حفظ المستخدم في Firestore ==== */
+function saveUser(email){
+  setDoc(doc(db,"users",email),{ email: email });
+}
 
-/* Start chat */
+/* ==== بدء محادثة جديدة ==== */
 window.startChat = async function(){
   const otherEmail = searchEmail.value.trim();
-  if(!otherEmail) return;
+  if(!otherEmail || otherEmail === currentUser.email) return;
 
   const userSnap = await getDoc(doc(db,"users",otherEmail));
   if(!userSnap.exists()){
@@ -158,14 +169,12 @@ window.startChat = async function(){
   }
 
   const chatId = [currentUser.email, otherEmail].sort().join("_");
-  await setDoc(doc(db,"chats",chatId),{
-    users:[currentUser.email, otherEmail]
-  });
+  await setDoc(doc(db,"chats",chatId),{ users:[currentUser.email, otherEmail] }, { merge:true });
 
   openChat(chatId, otherEmail);
 }
 
-/* Load chats */
+/* ==== تحميل قائمة الدردشات ==== */
 function loadChats(){
   onSnapshot(
     query(collection(db,"chats"), where("users","array-contains",currentUser.email)),
@@ -183,7 +192,7 @@ function loadChats(){
   );
 }
 
-/* Open chat */
+/* ==== فتح شات ==== */
 function openChat(chatId, other){
   currentChatId = chatId;
   chatTitle.innerText = other;
@@ -191,14 +200,15 @@ function openChat(chatId, other){
     chatMessages.innerHTML="";
     snap.forEach(m=>{
       const d = document.createElement("div");
-      d.className="msg "+(m.data().sender===currentUser.email?"me":"other");
+      d.className = "msg "+(m.data().sender===currentUser.email?"me":"other");
       d.innerText = m.data().text;
       chatMessages.appendChild(d);
     });
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 }
 
-/* Send message */
+/* ==== إرسال رسالة ==== */
 window.sendMessage = async function(){
   if(!msgInput.value) return;
   await addDoc(collection(db,"chats",currentChatId,"messages"),{
@@ -208,15 +218,6 @@ window.sendMessage = async function(){
   });
   msgInput.value="";
 }
-
-/* Save users */
-onAuthStateChanged(auth,user=>{
-  if(user){
-    setDoc(doc(db,"users",user.email),{
-      email:user.email
-    });
-  }
-});
 </script>
 
 </body>
