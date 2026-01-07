@@ -297,6 +297,12 @@ function loadChats(){
         div.className="chatItem";
         div.innerText=other;
         div.onclick=()=>openChat(docu.id, other);
+        const delBtn = document.createElement("button");
+delBtn.innerText = "حذف الدردشة";
+delBtn.style.marginLeft="10px";
+delBtn.onclick = () => deleteChat(docu.id);
+div.appendChild(delBtn);
+
         chatList.appendChild(div);
       });
     }
@@ -313,6 +319,16 @@ function openChat(chatId, other){
       const d = document.createElement("div");
       d.className = "msg "+(m.data().sender===currentUser.email?"me":"other");
       d.innerText = m.data().text;
+      if(m.data().sender === currentUser.email){
+  const btn = document.createElement("button");
+  btn.innerText = "حذف";
+  btn.style.marginLeft="10px";
+  btn.onclick = async () => {
+    await deleteDoc(doc(db,"chats",chatId,"messages",m.id));
+  };
+  d.appendChild(btn);
+}
+
       chatMessages.appendChild(d);
     });
     chatMessages.scrollTop = chatMessages.scrollHeight;
