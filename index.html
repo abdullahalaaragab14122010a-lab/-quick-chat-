@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>شات شخصين</title>
+
+<style>
+body{
+    font-family: Arial;
+    background:#f2f2f2;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+.box{
+    background:#fff;
+    padding:20px;
+    width:350px;
+    border-radius:10px;
+    box-shadow:0 0 10px #aaa;
+}
+input, button{
+    width:100%;
+    padding:10px;
+    margin:5px 0;
+}
+#chat{
+    display:none;
+}
+#messages{
+    height:200px;
+    border:1px solid #ccc;
+    overflow-y:auto;
+    padding:5px;
+    margin-bottom:10px;
+}
+.msg{
+    margin:5px 0;
+}
+.me{
+    color:blue;
+}
+.other{
+    color:green;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box" id="login">
+    <h3>تسجيل الدخول</h3>
+    <input id="username" placeholder="Username">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="loginUser()">دخول</button>
+</div>
+
+<div class="box" id="chat">
+    <h3 id="welcome"></h3>
+    <button onclick="logout()">تسجيل خروج</button>
+
+    <div id="messages"></div>
+
+    <input id="msgInput" placeholder="اكتب رسالة">
+    <button onclick="sendMsg()">إرسال</button>
+</div>
+
+<script>
+/* المستخدمين */
+const users = {
+    ahmed: "1234",
+    mohamed: "5678"
+};
+
+let currentUser = "";
+
+/* عند فتح الصفحة */
+window.onload = function(){
+    let savedUser = localStorage.getItem("currentUser");
+    if(savedUser){
+        currentUser = savedUser;
+        showChat();
+    }
+};
+
+/* تسجيل الدخول */
+function loginUser(){
+    let u = username.value.trim();
+    let p = password.value.trim();
+
+    if(users[u] === p){
+        currentUser = u;
+        localStorage.setItem("currentUser", u);
+        showChat();
+
+        if(Notification.permission !== "granted"){
+            Notification.requestPermission();
+        }
+
+    }else{
+        alert("بيانات الدخول غلط");
+    }
+}
+
+/* إظهار الشات */
+function showChat(){
+    document.getElementById("login").style.display = "none";
+    document.getElementById("chat").style.display = "block";
+    document.getElementById("welcome").innerText = "أهلاً " + currentUser;
+    loadMessages();
+}
+
+/* تسجيل خروج */
+function logout(){
+    localStorage.removeItem("currentUser");
+    location.reload();
+}
+
+/* إرسال رسالة */
+function sendMsg(){
+    let msg = msgInput.value.trim();
+    if(msg === "") return;
+
+    let messages = JSON.parse(localStorage.getItem("chat") || "[]");
+    messages.push({user: currentUser, text: msg});
+    localStorage.setItem("chat", JSON.stringify(messages));
+
+    if(Notification.permission === "granted"){
+        new Notification("رسالة جديدة", {
+            body: msg
+        });
+    }
+
+    msgInput.value = "";
+    loadMessages();
+}
+
+/* تحميل الرسائل */
+function loadMessages(){
+    let messages = JSON.parse(localStorage.getItem("chat") || "[]");
+    let messagesDiv = document.getElementById("messages");
+    messagesDiv.innerHTML = "";
+
+    messages.forEach(m=>{
+        let div = document.createElement("div");
+        div.className = "msg " + (m.user === currentUser ? "me" : "other");
+        div.innerText = m.user + ": " + m.text;
+        messagesDiv.appendChild(div);
+    });
+
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+</script>
+
+</body>
+</html>
+
