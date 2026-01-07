@@ -109,6 +109,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+// ⚡ تعريف عناصر HTML
+const authDiv = document.getElementById("auth");           // div تسجيل الدخول / إنشاء حساب
+const appDiv = document.getElementById("app");             // div الشات الرئيسي
+const chatList = document.getElementById("chatList");      // قائمة الدردشات
+const chatTitle = document.getElementById("chatTitle");    // اسم المستخدم اللي بتتكلم معاه
+const chatMessages = document.getElementById("chatMessages"); // الرسائل
 
 let currentUser;
 let currentChatId;
@@ -134,7 +140,7 @@ onAuthStateChanged(auth, user=>{
     loadChats();
   }else{
     auth.style.display="block";
-    appDiv.style.display="none";
+    authDiv.style.display = "none";
   }
 });
 
