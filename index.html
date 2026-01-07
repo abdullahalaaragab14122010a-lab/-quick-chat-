@@ -54,7 +54,7 @@ input, button{
 <h3>تسجيل دخول / حساب جديد</h3>
 <input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password">
-<button onclick="signUp()">إنشاء حساب</button>
+<button id="signupBtn">إنشاء حساب</button>
 <button onclick="login()">دخول</button>
 </div>
 
@@ -121,6 +121,7 @@ async function signUp(){
         alert("تم إنشاء الحساب بنجاح!");
     }catch(err){alert(err.message);}
 }
+document.getElementById("signupBtn").addEventListener("click", signUp);
 
 /* تسجيل دخول */
 async function login(){
